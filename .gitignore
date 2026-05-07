@@ -1,0 +1,30 @@
+# Environment
+.env
+.env.*
+*.local
+
+# Frontend
+web/node_modules/
+web/dist/
+web/dist-ssr/
+web/.vite/
+
+# Backend
+api/tasks/target/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
