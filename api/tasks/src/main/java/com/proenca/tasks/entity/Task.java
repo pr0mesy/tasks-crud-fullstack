@@ -2,8 +2,12 @@ package com.proenca.tasks.entity;
 
 import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,6 +26,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Task {
 
     @Id
@@ -42,12 +47,13 @@ public class Task {
     @Builder.Default
     private String priority = "media";
 
-    @Column(nullable = false)
+    @CreatedDate
+    @Column(name = "CREATED_DATE", nullable = false, updatable = false)
     private LocalDateTime created_date;
 
     @PrePersist
     public void prePersist() {
-        this.created_date  = LocalDateTime.now();
+        this.created_date = LocalDateTime.now();
     }    
     
 
