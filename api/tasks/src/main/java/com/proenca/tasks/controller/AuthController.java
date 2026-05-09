@@ -15,6 +15,7 @@ import com.proenca.tasks.entity.User;
 import com.proenca.tasks.repository.UserRepository;
 import com.proenca.tasks.security.JwtService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,7 +29,7 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/register")
-    public AuthResponseDTO register(@RequestBody RegisterRequestDTO request) {
+    public AuthResponseDTO register(@Valid @RequestBody RegisterRequestDTO request) {
         User user = User.builder()
                 .email(request.email())
                 .pass(passwordEncoder.encode(request.pass()))
@@ -42,8 +43,9 @@ public class AuthController {
         return new AuthResponseDTO(token);
     }
 
+
     @PostMapping("/login")
-    public AuthResponseDTO login(@RequestBody LoginRequestDTO request) {
+    public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),

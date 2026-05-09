@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,18 +7,60 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ListTodo, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function AuthPreview() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState("login");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+
     setIsLoading(true);
-    // Integrar com sua API de autenticação aqui
-    setTimeout(() => setIsLoading(false), 1500);
+    setError("");
+
+    const endpoint =
+      mode === "login"
+        ? "http://localhost:8080/auth/login"
+        : "http://localhost:8080/auth/register";
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email,
+          pass: form.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // backend pode retornar { message: ... }
+          throw new Error(data.message || "Erro ao autenticar");
+
+      }
+
+
+      login(data.token);
+
+      navigate("/tasks");
+    } catch (error) {
+    setError(error.message || "Erro inesperado ao autenticar");
+
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,9 +80,11 @@ export default function AuthPreview() {
           <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
             <ListTodo className="w-6 h-6 text-primary-foreground" />
           </div>
+
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
           </h1>
+
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login"
               ? "Entre para acessar suas tarefas"
@@ -61,7 +106,9 @@ export default function AuthPreview() {
                     id="name"
                     placeholder="Seu nome completo"
                     value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, name: e.target.value })
+                    }
                     autoComplete="name"
                   />
                 </motion.div>
@@ -74,7 +121,9 @@ export default function AuthPreview() {
                   type="email"
                   placeholder="voce@exemplo.com"
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, email: e.target.value })
+                  }
                   autoComplete="email"
                 />
               </div>
@@ -82,30 +131,46 @@ export default function AuthPreview() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
+
                   {mode === "login" && (
-                    <button type="button" className="text-xs text-primary hover:underline">
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline"
+                    >
                       Esqueceu a senha?
                     </button>
                   )}
                 </div>
+
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
                     className="pr-10"
                   />
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
+
+              {error && (
+                <p className="text-sm text-red-500 text-center">{error}</p>
+              )}
 
               <Button
                 type="submit"
@@ -128,7 +193,10 @@ export default function AuthPreview() {
               {mode === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
               <button
                 type="button"
-                onClick={() => setMode(mode === "login" ? "register" : "login")}
+                onClick={() => {
+                  setError("");
+                  setMode(mode === "login" ? "register" : "login");
+                }}
                 className="text-primary font-medium hover:underline"
               >
                 {mode === "login" ? "Cadastre-se" : "Entrar"}

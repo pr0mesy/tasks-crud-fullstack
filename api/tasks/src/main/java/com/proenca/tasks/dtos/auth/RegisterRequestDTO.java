@@ -1,6 +1,8 @@
 package com.proenca.tasks.dtos.auth;
 
+import jakarta.validation.constraints.NotEmpty;
+
 public record RegisterRequestDTO(
-    String email,
-    String pass
+    @NotEmpty(message = "E-mail cannot be empty") String email,
+    @NotEmpty(message = "Password cannot be empty") String pass
 ) { }
