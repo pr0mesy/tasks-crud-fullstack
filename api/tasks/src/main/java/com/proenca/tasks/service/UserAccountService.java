@@ -6,6 +6,7 @@ import com.proenca.tasks.dtos.account.UpdatePasswordRequestDTO;
 import com.proenca.tasks.entity.UserAccount;
 import com.proenca.tasks.mapper.UserAccountMapper;
 import com.proenca.tasks.repository.UserAccountRepository;
+import com.proenca.tasks.security.JwtService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +21,7 @@ public class UserAccountService {
     private final UserAccountRepository userAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserAccountMapper userAccountMapper;
+    private final JwtService jwtService;
 
     public AccountResponseDTO getCurrentAccount() {
         UserAccount user = getAuthenticatedUser();
@@ -42,8 +44,14 @@ public class UserAccountService {
         user.setEmail(request.email());
 
         UserAccount updatedUser = userAccountRepository.save(user);
+        String token = jwtService.generateToken(updatedUser.getEmail());
 
-        return userAccountMapper.toAccountResponse(updatedUser);
+        return new AccountResponseDTO(
+                updatedUser.getId(),
+                updatedUser.getEmail(),
+                updatedUser.getRole(),
+                token
+        );
     }
 
     public void updatePassword(UpdatePasswordRequestDTO request) {

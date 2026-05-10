@@ -16,13 +16,16 @@ import { User, Mail, Lock, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AccountDialog({ open, onOpenChange }) {
-  const { logout } = useAuth();
+  const { login, logout } = useAuth();
   const [user, setUser] = useState(null);
   const [newEmail, setNewEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [emailMessage, setEmailMessage] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -31,45 +34,65 @@ export default function AccountDialog({ open, onOpenChange }) {
       .then((account) => {
         setUser(account);
         setNewEmail(account?.email || "");
+        setEmailMessage("");
+        setPasswordMessage("");
       })
       .catch((error) => toast.error(error.message || "Erro ao carregar conta."));
   }, [open]);
 
   const handleEmailChange = async (event) => {
     event.preventDefault();
-    if (!newEmail.trim()) return;
 
-    setLoading(true);
+    if (!newEmail.trim()) {
+      setEmailMessage("Informe um e-mail valido.");
+      return;
+    }
+
+    setEmailLoading(true);
+    setEmailMessage("");
+
     try {
       const updatedUser = await apiRequest("/account/me", {
         method: "PUT",
         body: { email: newEmail },
       });
+
       setUser(updatedUser);
       setNewEmail(updatedUser?.email || "");
-      toast.success("E-mail atualizado. Entre novamente.");
-      logout();
+
+      if (updatedUser?.token) {
+        login(updatedUser.token);
+      }
+
+      setEmailMessage("E-mail atualizado com sucesso.");
+      toast.success("E-mail atualizado!");
     } catch (error) {
-      toast.error(error.message || "Erro ao atualizar e-mail.");
+      const message = error.message || "Erro ao atualizar e-mail.";
+      setEmailMessage(message);
+      toast.error(message);
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
   const handlePasswordChange = async (event) => {
     event.preventDefault();
+    setPasswordMessage("");
 
     if (!currentPassword) {
+      setPasswordMessage("Informe a senha atual.");
       toast.error("Informe a senha atual.");
       return;
     }
 
     if (!newPassword || newPassword !== confirmPassword) {
+      setPasswordMessage("As senhas nao coincidem.");
       toast.error("As senhas nao coincidem.");
       return;
     }
 
-    setLoading(true);
+    setPasswordLoading(true);
+
     try {
       await apiRequest("/account/me/password", {
         method: "PUT",
@@ -78,14 +101,18 @@ export default function AccountDialog({ open, onOpenChange }) {
           newPassword,
         },
       });
-      toast.success("Senha atualizada!");
+
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordMessage("Senha atualizada com sucesso.");
+      toast.success("Senha atualizada!");
     } catch (error) {
-      toast.error(error.message || "Erro ao atualizar senha.");
+      const message = error.message || "Erro ao atualizar senha.";
+      setPasswordMessage(message);
+      toast.error(message);
     } finally {
-      setLoading(false);
+      setPasswordLoading(false);
     }
   };
 
@@ -119,7 +146,16 @@ export default function AccountDialog({ open, onOpenChange }) {
             placeholder="novo@email.com"
             autoComplete="email"
           />
-          <Button type="submit" size="sm" variant="outline" disabled={loading} className="w-full">
+          {emailMessage && (
+            <p className="text-xs text-muted-foreground">{emailMessage}</p>
+          )}
+          <Button
+            type="submit"
+            size="sm"
+            variant="outline"
+            disabled={emailLoading}
+            className="w-full"
+          >
             Atualizar e-mail
           </Button>
         </form>
@@ -151,7 +187,16 @@ export default function AccountDialog({ open, onOpenChange }) {
             placeholder="Confirmar nova senha"
             autoComplete="new-password"
           />
-          <Button type="submit" size="sm" variant="outline" disabled={loading} className="w-full">
+          {passwordMessage && (
+            <p className="text-xs text-muted-foreground">{passwordMessage}</p>
+          )}
+          <Button
+            type="submit"
+            size="sm"
+            variant="outline"
+            disabled={passwordLoading}
+            className="w-full"
+          >
             Atualizar senha
           </Button>
         </form>

@@ -12,7 +12,8 @@ public class UserAccountMapper {
         return new AccountResponseDTO(
                 user.getId(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole(),
+                null
         );
     }
 }
