@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/account")
+@RequestMapping({"/account", "/api/v1/account"})
 @RequiredArgsConstructor
 public class UserAccountController {
 

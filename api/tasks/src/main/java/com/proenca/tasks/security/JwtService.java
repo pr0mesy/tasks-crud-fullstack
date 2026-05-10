@@ -2,7 +2,6 @@ package com.proenca.tasks.security;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.time.LocalDateTime;
 
 import javax.crypto.SecretKey;
 

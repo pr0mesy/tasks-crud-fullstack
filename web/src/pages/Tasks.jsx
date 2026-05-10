@@ -4,16 +4,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, ListTodo } from "lucide-react";
+import { Plus, Search, ListTodo, UserCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskFormDialog from "@/components/tasks/TaskFormDialog";
 import EmptyState from "@/components/tasks/EmptyState";
+import AccountDialog from "@/components/AccountDialog";
 
 export default function Tasks() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -24,6 +26,10 @@ export default function Tasks() {
     queryFn: tasksApi.list,
   });
 
+  const showMutationError = (error) => {
+    toast.error(error.message || "Erro ao salvar tarefa.");
+  };
+
   const createMutation = useMutation({
     mutationFn: tasksApi.create,
     onSuccess: () => {
@@ -31,6 +37,7 @@ export default function Tasks() {
       setDialogOpen(false);
       toast.success("Tarefa criada!");
     },
+    onError: showMutationError,
   });
 
   const updateMutation = useMutation({
@@ -41,14 +48,16 @@ export default function Tasks() {
       setEditingTask(null);
       toast.success("Tarefa atualizada!");
     },
+    onError: showMutationError,
   });
 
   const deleteMutation = useMutation({
     mutationFn: tasksApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Tarefa excluída!");
+      toast.success("Tarefa excluida!");
     },
+    onError: showMutationError,
   });
 
   const handleSubmit = (formData) => {
@@ -77,45 +86,55 @@ export default function Tasks() {
     setDialogOpen(true);
   };
 
-  const filtered = tasks.filter((t) => {
+  const filtered = tasks.filter((task) => {
+    const normalizedSearch = search.toLowerCase();
     const matchesSearch =
-      !search ||
-      t.title?.toLowerCase().includes(search.toLowerCase()) ||
-      t.description?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "todas" || t.status === statusFilter;
+      !normalizedSearch ||
+      task.title?.toLowerCase().includes(normalizedSearch) ||
+      task.description?.toLowerCase().includes(normalizedSearch);
+    const matchesStatus = statusFilter === "todas" || task.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const counts = {
     todas: tasks.length,
-    pendente: tasks.filter((t) => t.status === "pendente").length,
-    em_progresso: tasks.filter((t) => t.status === "em_progresso").length,
-    concluida: tasks.filter((t) => t.status === "concluida").length,
+    pendente: tasks.filter((task) => task.status === "pendente").length,
+    em_progresso: tasks.filter((task) => task.status === "em_progresso").length,
+    concluida: tasks.filter((task) => task.status === "concluida").length,
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+        <div className="flex items-center justify-between mb-8 gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
               <ListTodo className="w-5 h-5 text-primary-foreground" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-2xl font-bold tracking-tight text-foreground">Tarefas</h1>
               <p className="text-sm text-muted-foreground">
-                {counts.todas} tarefa{counts.todas !== 1 && "s"} • {counts.concluida} concluída{counts.concluida !== 1 && "s"}
+                {counts.todas} tarefa{counts.todas !== 1 && "s"} | {counts.concluida} concluida{counts.concluida !== 1 && "s"}
               </p>
             </div>
           </div>
-          <Button onClick={openNewDialog} size="sm" className="gap-2">
-            <Plus className="w-4 h-4" />
-            Nova
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setAccountOpen(true)}
+              aria-label="Minha conta"
+            >
+              <UserCircle className="w-4 h-4" />
+            </Button>
+            <Button onClick={openNewDialog} size="sm" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Nova
+            </Button>
+          </div>
         </div>
 
-        {/* Search & Filters */}
         {tasks.length > 0 && (
           <div className="space-y-4 mb-6">
             <div className="relative">
@@ -123,7 +142,7 @@ export default function Tasks() {
               <Input
                 placeholder="Buscar tarefas..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(event) => setSearch(event.target.value)}
                 className="pl-10"
               />
             </div>
@@ -146,7 +165,6 @@ export default function Tasks() {
           </div>
         )}
 
-        {/* Task List */}
         {isLoading ? (
           <div className="flex justify-center py-20">
             <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -180,6 +198,7 @@ export default function Tasks() {
         task={editingTask}
         onSubmit={handleSubmit}
       />
+      <AccountDialog open={accountOpen} onOpenChange={setAccountOpen} />
     </div>
   );
 }

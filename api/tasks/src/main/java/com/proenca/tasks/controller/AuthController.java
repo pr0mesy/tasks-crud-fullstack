@@ -19,7 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping({"/auth", "/api/v1/auth"})
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -30,6 +30,10 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthResponseDTO register(@Valid @RequestBody RegisterRequestDTO dto) {
+        if (usuarioRepository.findByEmail(dto.email()).isPresent()) {
+            throw new IllegalArgumentException("E-mail already in use.");
+        }
+
         UserAccount user = UserAccount.builder()
                 .email(dto.email())
                 .pass(passwordEncoder.encode(dto.pass()))

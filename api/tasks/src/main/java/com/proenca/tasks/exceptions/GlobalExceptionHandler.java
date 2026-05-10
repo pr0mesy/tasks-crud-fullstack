@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -40,6 +41,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> dataIntegrityHandle(DataIntegrityViolationException ex, HttpServletRequest request) {
+        ErrorResponseDTO error = new ErrorResponseDTO(
+            HttpStatus.CONFLICT.value(),
+            "CONFLICT",
+            "Resource already exists or violates a database constraint.",
+            request.getRequestURI(),
+            LocalDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> badCredentialsHandle(
             org.springframework.security.authentication.BadCredentialsException ex,
@@ -63,7 +77,7 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getDefaultMessage())
                 .filter(m -> m != null && !m.isBlank())
                 .findFirst()
-                .orElse("Parâmetros inválidos");
+                .orElse("Parametros invalidos.");
 
         ErrorResponseDTO error = new ErrorResponseDTO(
             HttpStatus.BAD_REQUEST.value(),
@@ -81,7 +95,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO error = new ErrorResponseDTO(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "INTERNAL_SERVER_ERROR",
-            ex.getMessage(),
+            "Unexpected internal error.",
             request.getRequestURI(),
             LocalDateTime.now()
         );

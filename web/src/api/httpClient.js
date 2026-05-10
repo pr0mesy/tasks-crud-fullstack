@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = "/api";
+const DEFAULT_API_BASE_URL = "/api/v1";
 
 const trimSlashes = (value) => value.replace(/^\/+|\/+$/g, "");
 
@@ -41,6 +41,17 @@ export async function apiRequest(path, options = {}) {
   const data = hasJson ? await response.json() : await response.text();
 
   if (!response.ok) {
+    const isAuthRequest = path.startsWith("/auth/");
+
+    if (response.status === 401 && !isAuthRequest) {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("auth_token");
+
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
+    }
+
     const message =
       typeof data === "object" && data !== null
         ? data.message || data.error

@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ListTodo, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
+import { apiRequest } from "@/api/httpClient";
 
 export default function AuthPreview() {
   const navigate = useNavigate();
@@ -19,45 +20,25 @@ export default function AuthPreview() {
   const [mode, setMode] = useState("login");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     setIsLoading(true);
     setError("");
 
-    const endpoint =
-      mode === "login"
-        ? "http://localhost:8080/auth/login"
-        : "http://localhost:8080/auth/register";
-
     try {
-      const response = await fetch(endpoint, {
+      const data = await apiRequest(mode === "login" ? "/auth/login" : "/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        body: {
           email: form.email,
           pass: form.password,
-        }),
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // backend pode retornar { message: ... }
-          throw new Error(data.message || "Erro ao autenticar");
-
-      }
-
-
       login(data.token);
-
       navigate("/tasks");
     } catch (error) {
-    setError(error.message || "Erro inesperado ao autenticar");
-
+      setError(error.message || "Erro inesperado ao autenticar");
     } finally {
       setIsLoading(false);
     }
@@ -106,8 +87,8 @@ export default function AuthPreview() {
                     id="name"
                     placeholder="Seu nome completo"
                     value={form.name}
-                    onChange={(e) =>
-                      setForm({ ...form, name: e.target.value })
+                    onChange={(event) =>
+                      setForm({ ...form, name: event.target.value })
                     }
                     autoComplete="name"
                   />
@@ -121,8 +102,8 @@ export default function AuthPreview() {
                   type="email"
                   placeholder="voce@exemplo.com"
                   value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
+                  onChange={(event) =>
+                    setForm({ ...form, email: event.target.value })
                   }
                   autoComplete="email"
                 />
@@ -146,18 +127,20 @@ export default function AuthPreview() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="********"
                     value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
+                    onChange={(event) =>
+                      setForm({ ...form, password: event.target.value })
                     }
                     className="pr-10"
+                    autoComplete={mode === "login" ? "current-password" : "new-password"}
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -190,7 +173,7 @@ export default function AuthPreview() {
             <Separator className="my-5" />
 
             <p className="text-center text-sm text-muted-foreground">
-              {mode === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+              {mode === "login" ? "Nao tem uma conta?" : "Ja tem uma conta?"}{" "}
               <button
                 type="button"
                 onClick={() => {
