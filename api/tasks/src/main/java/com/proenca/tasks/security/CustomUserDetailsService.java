@@ -8,8 +8,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.proenca.tasks.entity.User;
-import com.proenca.tasks.repository.UserRepository;
+import com.proenca.tasks.entity.UserAccount;
+import com.proenca.tasks.repository.UserAccountRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,11 +17,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService{
     
-    private final UserRepository repository;
+    private final UserAccountRepository repository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = repository.findByEmail(email)
+        UserAccount user = repository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found."));
 
         return new org.springframework.security.core.userdetails.User(

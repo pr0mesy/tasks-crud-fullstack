@@ -1,4 +1,4 @@
-package com.proenca.tasks.dtos;
+package com.proenca.tasks.dtos.task;
 
 import java.time.LocalDateTime;
 

@@ -2,8 +2,8 @@ package com.proenca.tasks.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.proenca.tasks.dtos.TaskRequestDTO;
-import com.proenca.tasks.dtos.TaskResponseDTO;
+import com.proenca.tasks.dtos.task.TaskRequestDTO;
+import com.proenca.tasks.dtos.task.TaskResponseDTO;
 import com.proenca.tasks.entity.Task;
 
 @Component

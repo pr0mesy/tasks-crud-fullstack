@@ -2,15 +2,18 @@ package com.proenca.tasks.service;
 
 import java.util.List;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proenca.tasks.dtos.TaskRequestDTO;
-import com.proenca.tasks.dtos.TaskResponseDTO;
+import com.proenca.tasks.dtos.task.TaskRequestDTO;
+import com.proenca.tasks.dtos.task.TaskResponseDTO;
 import com.proenca.tasks.entity.Task;
+import com.proenca.tasks.entity.UserAccount;
 import com.proenca.tasks.exceptions.ResourceNotFoundException;
 import com.proenca.tasks.mapper.TaskMapper;
 import com.proenca.tasks.repository.TaskRepository;
+import com.proenca.tasks.repository.UserAccountRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,50 +21,69 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TaskService {
 
-    private final TaskRepository repository;
-    private final TaskMapper mapper;
+    private final TaskRepository taskRepository;
+    private final UserAccountRepository userAccountRepository;
+    private final TaskMapper taskMapper;
 
     public List<TaskResponseDTO> findAll() {
-        return repository.findAll()
+        UserAccount user = getAuthenticatedUser();
+
+        return taskRepository.findByUser(user)
                 .stream()
-                .map(mapper::toDto)
+                .map(taskMapper::toDto)
                 .toList();
     }
 
     public TaskResponseDTO findById(Long id) {
-        Task task = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        UserAccount user = getAuthenticatedUser();
 
-        return mapper.toDto(task);
+        Task task = taskRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found."));
+
+        return taskMapper.toDto(task);
     }
 
     @Transactional
     public TaskResponseDTO create(TaskRequestDTO dto) {
-        Task task = mapper.toEntity(dto);
+        UserAccount user = getAuthenticatedUser();
 
-        repository.save(task);
+        Task task = taskMapper.toEntity(dto);
+        task.setUser(user);
 
-        return mapper.toDto(task);
+        taskRepository.save(task);
+
+        return taskMapper.toDto(task);
     }
 
     @Transactional
     public void delete(Long id) {
-        Task task = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        UserAccount user = getAuthenticatedUser();
 
-        repository.delete(task);
+        Task task = taskRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found."));
+
+        taskRepository.delete(task);
     }
 
     @Transactional
     public TaskResponseDTO update(Long id, TaskRequestDTO dto) {
-        Task task = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        UserAccount user = getAuthenticatedUser();
 
-        mapper.updateEntity(task, dto);
+        Task task = taskRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found."));
 
-        // não precisa chamar o repository, o jpa ja salva pra nois
+        taskMapper.updateEntity(task, dto);
 
-        return mapper.toDto(task);
+        return taskMapper.toDto(task);
     }
 
+    private UserAccount getAuthenticatedUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userAccountRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found."));
+    }
 }

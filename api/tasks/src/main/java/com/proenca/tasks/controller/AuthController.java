@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.proenca.tasks.dtos.auth.AuthResponseDTO;
 import com.proenca.tasks.dtos.auth.LoginRequestDTO;
 import com.proenca.tasks.dtos.auth.RegisterRequestDTO;
-import com.proenca.tasks.entity.User;
-import com.proenca.tasks.repository.UserRepository;
+import com.proenca.tasks.entity.UserAccount;
+import com.proenca.tasks.repository.UserAccountRepository;
 import com.proenca.tasks.security.JwtService;
 
 import jakarta.validation.Valid;
@@ -23,16 +23,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository usuarioRepository;
+    private final UserAccountRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
     @PostMapping("/register")
-    public AuthResponseDTO register(@Valid @RequestBody RegisterRequestDTO request) {
-        User user = User.builder()
-                .email(request.email())
-                .pass(passwordEncoder.encode(request.pass()))
+    public AuthResponseDTO register(@Valid @RequestBody RegisterRequestDTO dto) {
+        UserAccount user = UserAccount.builder()
+                .email(dto.email())
+                .pass(passwordEncoder.encode(dto.pass()))
                 .role("ROLE_USER")
                 .build();
 
@@ -45,15 +45,15 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO request) {
+    public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO dto) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.pass()
+                        dto.email(),
+                        dto.pass()
                 )
         );
 
-        String token = jwtService.generateToken(request.email());
+        String token = jwtService.generateToken(dto.email());
 
         return new AuthResponseDTO(token);
     }
